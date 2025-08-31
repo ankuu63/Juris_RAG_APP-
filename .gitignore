@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+
+# VS Code settings
+.vscode/
+
+# Docker
+*.log
+*.pid
+docker-compose.override.yml
+docker-compose.override.yml.*
+
+
+
+# Git
+*.orig
+*.swp
+*.DS_Store
+.git/
