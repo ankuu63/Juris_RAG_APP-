@@ -55,7 +55,7 @@ lambda_mult: 1 (balance between relevance & diversity)
 
 ## ARCHITECTURE
 
-![image alt](https://github.com/ankuu63/JurisRag_pinecone_fresh/blob/028df29bf6f7c921619df6cf0cc95921dabb5bc0/dia.drawio.png)
+![image alt](https://github.com/ankuu63/Juris_RAG_APP-/blob/9d7146521dd7ef6b1dc158f83e6fcf18117e745d/Faisss.drawio.png)
 
 
 ## Quick Start
