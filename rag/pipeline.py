@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from langchain_core.prompts import PromptTemplate
