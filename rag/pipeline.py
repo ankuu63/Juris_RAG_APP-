@@ -22,7 +22,7 @@ class llmsetup:
         
         self.llm= ChatOpenAI(
             api_key=api_key,
-            model="",
+            model="gpt-4o-mini",
             temperature=0.7
         )
 
@@ -34,9 +34,8 @@ class llmsetup:
 class Embedder:
 
     def __init__(self):
-        self.Emodel= OpenAIEmbeddings(
-                    model='text-embedding-3-small',
-                    dimensions=200
+        self.Emodel= HuggingFaceEmbeddings(
+                    model_name="sentence-transformers/all-MiniLM-L6-v2"        
         )
     
 class Preprocessor:
@@ -94,7 +93,10 @@ class RAGPipeline:
         
         #2 retrieve documnets form db
 
-        store= FAISS.from_documents(chunks, self.embedder0 )
+        store= FAISS.from_documents(
+            chunks,
+            self.embedder0.Emodel
+        )
         retriever= store.as_retriever(
                             search_type="mmr",
                             search_kwargs= {"k":3, 
