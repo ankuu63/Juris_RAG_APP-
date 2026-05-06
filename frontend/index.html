@@ -4,75 +4,139 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JurisRAG</title>
-    <!-- Link to external stylesheet -->
+
     <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
+
     <div class="container">
-       
+
         <h1>📘 JurisRAG : AI powered legal assistant</h1>
 
-        <!-- Chat form: query + optional PDF upload -->
+        <!-- FORM -->
         <form id="chatForm">
-            <!-- User query input -->
+
+            <!-- QUERY -->
             <label for="query">Enter your query:</label>
-            <textarea id="query" name="query" rows="4" required></textarea>
 
-            <!-- PDF file upload input -->
+            <textarea
+                id="query"
+                name="query"
+                rows="4"
+                required
+            ></textarea>
+
+            <!-- PDF -->
             <label for="pdf">Upload PDF (optional):</label>
-            <input type="file" id="pdf" name="pdf" accept="application/pdf">
 
-            <!-- Submit button -->
-            <button type="submit">Ask</button>
+            <input
+                type="file"
+                id="pdf"
+                name="pdf"
+                accept="application/pdf"
+            >
+
+            <!-- BUTTON -->
+            <button type="submit">
+                Ask
+            </button>
+
         </form>
 
-        <!-- Response box -->
+        <!-- RESPONSE -->
         <div id="responseBox">
+
             <h2>Answer:</h2>
-            <p id="answerText">Answer is cooking.....</p>
+
+            <p id="answerText">
+                Answer is cooking.....
+            </p>
+
         </div>
+
     </div>
 
+    <!-- SCRIPT -->
     <script>
-        // Attach event listener to form submission
-        document.getElementById("chatForm").addEventListener("submit", async function (e) {
-            e.preventDefault(); // Prevent default form reload
 
-            // Create FormData object to send text + file
-            const formData = new FormData();
-            formData.append("query", document.getElementById("query").value);
+        const form = document.getElementById("chatForm");
 
-            const pdfFile = document.getElementById("pdf").files[0];
-            if (pdfFile) {
-                formData.append("pdf", pdfFile);
-            }
+        form.addEventListener("submit", async function (e) {
 
-            const responseBox = document.getElementById("answerText");
-            responseBox.textContent = "⏳ Processing... please wait";
+            e.preventDefault();
+
+            const responseBox =
+                document.getElementById("answerText");
+
+            responseBox.textContent =
+                "⏳ Processing... please wait";
 
             try {
-                // Send request to backend /chat
+
+                // FORM DATA
+                const formData = new FormData();
+
+                formData.append(
+                    "query",
+                    document.getElementById("query").value
+                );
+
+                // PDF FILE
+                const pdfFile =
+                    document.getElementById("pdf").files[0];
+
+                if (pdfFile) {
+                    formData.append("pdf", pdfFile);
+                }
+
+                // FETCH REQUEST
                 const response = await fetch("/chat", {
                     method: "POST",
                     body: formData
                 });
 
-                // Try to parse JSON response
-                const data = await response.json();
+                // GET RAW RESPONSE
+                const text = await response.text();
 
-                if (response.ok) {
-                    // ✅ Success case → show answer
-                    responseBox.textContent = data.answer || "No response found.";
-                } else {
-                    // ❌ Backend error but still JSON → show error message
-                    responseBox.textContent = "⚠️ Error: " + (data.error || "Unknown error");
+                try {
+
+                    // TRY JSON PARSE
+                    const data = JSON.parse(text);
+
+                    if (response.ok) {
+
+                        responseBox.textContent =
+                            data.answer || "No response found.";
+
+                    } else {
+
+                        responseBox.textContent =
+                            "⚠️ Error: " +
+                            (data.error || "Unknown error");
+
+                    }
+
+                } catch (jsonError) {
+
+                    // NON JSON RESPONSE
+                    responseBox.textContent =
+                        "❌ Backend returned non-JSON response:\n\n"
+                        + text;
+
                 }
 
             } catch (error) {
-                // ❌ Network / parsing error → show fallback
-                responseBox.textContent = "❌ Network/Parsing Error: " + error;
+
+                // NETWORK ERROR
+                responseBox.textContent =
+                    "❌ Network Error:\n\n" + error;
+
             }
+
         });
+
     </script>
+
 </body>
 </html>

@@ -29,7 +29,7 @@ class llmsetup:
     def __call__(self, prompt):
 
         response= self.llm.invoke(prompt)
-        return response 
+        return response.content
 
 class Embedder:
 
@@ -111,7 +111,7 @@ class RAGPipeline:
         prompt= PromptTemplate(
                     template= """ You are a helpful Legal assistant , act as an authentic indian legal scholar.
                                   Answer ONLY from the provided data content , you are allowed to answer authentic and genuine facts also .
-                                  If the context is insuficient , just say you dnt know it and context is not availabel in doc.
+                                  If the context is insuficient , just say you dnt know it and context is not availabel in doc, and answer the querry normally .
 
                                 context: {context}  question is {question}
 
@@ -126,7 +126,7 @@ class RAGPipeline:
         })
 
 
-        return self.llm0.invoke(final_prompt)
+        return self.llm0(final_prompt)
     
 
 

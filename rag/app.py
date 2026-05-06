@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, Form
+from fastapi import FastAPI, UploadFile, Form ,File
 from fastapi.responses import FileResponse    #for rendering html page 
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles     #for adding static i.e csss files 
@@ -25,7 +25,7 @@ def home():
 
 
 @app.post("/chat")
-async def chat(query: str = Form(...), pdf: UploadFile = None):
+async def chat(query: str = Form(...), pdf: UploadFile = File(None)):
    
 
     pdf_path = None  # Temporary storage path
