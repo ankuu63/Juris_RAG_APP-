@@ -1,26 +1,32 @@
-import os 
+import os
 from dotenv import load_dotenv
-
 
 from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from langchain_core.prompts import PromptTemplate
 
-from langchain_community.vectorstores import  FAISS
+from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_experimental.text_splitter import SemanticChunker
 
 load_dotenv()
 
-#1. llm provider 
+
+# =========================
+# LLM SETUP
+# =========================
+
 class llmsetup:
+
     def __init__(self):
-        api_key=os.getenv("OPENAI_API_KEY")
+
+        api_key = os.getenv("OPENAI_API_KEY")
+
         if not api_key:
-            raise ValueError("api key not found in env")
-        
-        self.llm= ChatOpenAI(
+            raise ValueError("API key not found in env")
+
+        self.llm = ChatOpenAI(
             api_key=api_key,
             model="gpt-4o-mini",
             temperature=0.7
@@ -28,129 +34,201 @@ class llmsetup:
 
     def __call__(self, prompt):
 
-        response= self.llm.invoke(prompt)
+        response = self.llm.invoke(prompt)
+
         return response.content
+
+
+# =========================
+# EMBEDDING MODEL
+# =========================
 
 class Embedder:
 
     def __init__(self):
-        self.Emodel= HuggingFaceEmbeddings(
-                    model_name="sentence-transformers/all-MiniLM-L6-v2"        
+
+        self.Emodel = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
-    
+
+
+# =========================
+# PDF PREPROCESSOR
+# =========================
+
 class Preprocessor:
 
-    def __init__(self, embedder:Embedder):
+    def __init__(self, embedder: Embedder):
 
-        self.chunker= SemanticChunker(
+        self.chunker = SemanticChunker(
             embeddings=embedder.Emodel,
             breakpoint_threshold_type="standard_deviation",
             breakpoint_threshold_amount=1.0
-        )    
+        )
 
-    def process_pdf(self,pdf_path: str):
+    def process_pdf(self, pdf_path: str):
 
-        #1 loading pdf into doc obj
-        loader= PyPDFLoader(pdf_path)
-        docs= loader.load()
+        # 1. Load PDF
+        loader = PyPDFLoader(pdf_path)
 
-        texts= [doc.page_content for doc in docs  ]
+        docs = loader.load()
 
-        #2. chunkings the text of pdf
-        chunk= self.chunker.create_documents(texts)
+        # 2. Extract text only
+        texts = [doc.page_content for doc in docs]
 
-        return chunk
-    
+        # 3. Semantic chunking
+        chunks = self.chunker.create_documents(texts)
 
-###
-###
-###callable having main function as run 
-    
+        # 4. Add metadata manually to chunks
+        for i, chunk in enumerate(chunks):
+
+            # fallback metadata
+            chunk.metadata["source"] = os.path.basename(pdf_path)
+
+            # try mapping page numbers approximately
+            if i < len(docs):
+                chunk.metadata["page"] = docs[i].metadata.get("page", i + 1)
+            else:
+                chunk.metadata["page"] = i + 1
+
+        return chunks
+
+
+# =========================
+# MAIN RAG PIPELINE
+# =========================
+
 class RAGPipeline:
 
-    def __init__  (self):
-        print("initializing the pipeline")
+    def __init__(self):
 
-        self.llm0=llmsetup()
-        self.embedder0= Embedder()
-        #self.vectordb=VectorDB(self.embedder0)
-        self.preprocessor= Preprocessor(self.embedder0)
-        #self.retriever= self.vectordb.retriever()
+        print("Initializing pipeline...")
 
-        print("pipeline initialized succsefully")
+        self.llm0 = llmsetup()
 
-    
-    def run(self, query: str, pdf_path: str =None)->str:
+        self.embedder0 = Embedder()
 
-        #1. process the pdf & retrieve
+        self.preprocessor = Preprocessor(self.embedder0)
+
+        print("Pipeline initialized successfully")
+
+
+    def run(self, query: str, pdf_path: str = None):
+
+        # =========================
+        # PDF MODE
+        # =========================
+
         if pdf_path:
 
+            # 1. Process PDF
             chunks = self.preprocessor.process_pdf(pdf_path)
 
+            # 2. Create vector DB
             store = FAISS.from_documents(
-                        chunks,
-                        self.embedder0.Emodel
-                    )
+                chunks,
+                self.embedder0.Emodel
+            )
 
+            # 3. Retriever
             retriever = store.as_retriever(
-                            search_type="mmr",
-                            search_kwargs={"k":3, "lambda_mult":1}
-                    )
+                search_type="mmr",
+                search_kwargs={
+                    "k": 3,
+                    "lambda_mult": 1
+                }
+            )
 
+            # 4. Retrieve docs
             retrieved_docs = retriever.invoke(query)
 
-            context = "\n\n".join([i.page_content for i in retrieved_docs])
+            # 5. Build context
+            context = "\n\n".join([
+                doc.page_content for doc in retrieved_docs
+            ])
 
+            # 6. Prompt
             prompt = PromptTemplate(
-                            template="""
-                            You are a helpful Legal assistant.
+                template="""
+                You are a helpful Legal assistant.
 
-                            Answer from the provided PDF context.
+                Answer ONLY from the provided PDF context.
 
-                            Context:
-                            {context}   
+                If answer is not present in context,
+                say that clearly.
 
-                            Question:
-                            {question}
-                            """,
+                Context:
+                {context}
 
-                            input_variables=['context', 'question']
-                        )
+                Question:
+                {question}
+                """,
+
+                input_variables=["context", "question"]
+            )
 
             final_prompt = prompt.invoke({
-                                "context": context,
-                                "question": query
-                        })
+                "context": context,
+                "question": query
+            })
 
-            return self.llm0(final_prompt)
+            # 7. LLM response
+            answer = self.llm0(final_prompt)
+
+            # =========================
+            # CITATION EXTRACTION
+            # =========================
+
+            sources = []
+
+            seen = set()
+
+            for doc in retrieved_docs:
+
+                file_name = doc.metadata.get("source", "Unknown")
+
+                page_number = doc.metadata.get("page", "Unknown")
+
+                unique_key = f"{file_name}_{page_number}"
+
+                if unique_key not in seen:
+
+                    seen.add(unique_key)
+
+                    sources.append({
+                        "file": file_name,
+                        "page": page_number
+                    })
+
+            # =========================
+            # FINAL RESPONSE
+            # =========================
+
+            return {
+                "answer": answer,
+                "sources": sources
+            }
+
+        # =========================
+        # NO PDF MODE
+        # =========================
 
         else:
 
             warning_prompt = f"""
-                                No pdf uploaded , answer the quetion using your available info,knowledge and data 
-                                Question:
-                                {query}
+            No PDF uploaded.
 
-                                Also mention briefly that no PDF context was provided.
-                                """
+            Answer the question using your general knowledge and available data to you.
 
-            return self.llm0(warning_prompt)
-        
-         
+            Also mention briefly that no PDF context was provided.
 
+            Question:
+            {query}
+            """
 
+            answer = self.llm0(warning_prompt)
 
-
-    
-
-
-
-
-
-
-
-
-         
-
-            
-        
+            return {
+                "answer": answer,
+                "sources": []
+            }
