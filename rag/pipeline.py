@@ -6,8 +6,8 @@ from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain.vectorstores import  FAISS
+
+from langchain_community.vectorstores import  FAISS
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_experimental.text_splitter import SemanticChunker
 
@@ -82,52 +82,61 @@ class RAGPipeline:
     
     def run(self, query: str, pdf_path: str =None)->str:
 
-        #1. process the pdf 
+        #1. process the pdf & retrieve
         if pdf_path:
-            chunks= self.preprocessor.process_pdf(pdf_path)
-        
-            
 
-        else: 
-            raise ValueError("pdf_path is currupt")
-        
-        #2 retrieve documnets form db
+            chunks = self.preprocessor.process_pdf(pdf_path)
 
-        store= FAISS.from_documents(
-            chunks,
-            self.embedder0.Emodel
-        )
-        retriever= store.as_retriever(
+            store = FAISS.from_documents(
+                        chunks,
+                        self.embedder0.Emodel
+                    )
+
+            retriever = store.as_retriever(
                             search_type="mmr",
-                            search_kwargs= {"k":3, 
-                                              "lambda_mult":1}
-        )
+                            search_kwargs={"k":3, "lambda_mult":1}
+                    )
 
-        retrieved_docs= retriever.invoke(query)
-        context= "\n\n".join([i.page_content for i in retrieved_docs])
+            retrieved_docs = retriever.invoke(query)
 
-        #3 prompting and generating final prompt
+            context = "\n\n".join([i.page_content for i in retrieved_docs])
 
-        prompt= PromptTemplate(
-                    template= """ You are a helpful Legal assistant , act as an authentic indian legal scholar.
-                                  Answer ONLY from the provided data content , you are allowed to answer authentic and genuine facts also .
-                                  If the context is insuficient , just say you dnt know it and context is not availabel in doc, and answer the querry normally .
+            prompt = PromptTemplate(
+                            template="""
+                            You are a helpful Legal assistant.
 
-                                context: {context}  question is {question}
+                            Answer from the provided PDF context.
 
-                               """,
+                            Context:
+                            {context}   
 
-                    input_variables= ['context', 'question']
-        )
+                            Question:
+                            {question}
+                            """,
 
-        final_prompt= prompt.invoke({
-            "context":context,
-            "question":query
-        })
+                            input_variables=['context', 'question']
+                        )
 
+            final_prompt = prompt.invoke({
+                                "context": context,
+                                "question": query
+                        })
 
-        return self.llm0(final_prompt)
-    
+            return self.llm0(final_prompt)
+
+        else:
+
+            warning_prompt = f"""
+                                No pdf uploaded , answer the quetion using your available info,knowledge and data 
+                                Question:
+                                {query}
+
+                                Also mention briefly that no PDF context was provided.
+                                """
+
+            return self.llm0(warning_prompt)
+        
+         
 
 
 

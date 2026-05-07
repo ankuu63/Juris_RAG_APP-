@@ -1,64 +1,255 @@
-body {
-    font-family: Arial, sans-serif;
-    background: rgb(1, 12, 23);
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
+
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    height: 100vh;
+    overflow: hidden;
+}
+
+
+/* =========================
+   MAIN LAYOUT
+========================= */
+
+.main-layout {
+    display: flex;
+    height: 100vh;
+}
+
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar {
+    width: 340px;
+    background: #111827;
+    border-right: 1px solid #1e293b;
+    padding: 25px;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar h2 {
+    font-size: 24px;
+    margin-bottom: 25px;
+    color: #38bdf8;
+}
+
+
+/* =========================
+   PDF LIST
+========================= */
+
+.pdf-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+}
+
+.pdf-item {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    transition: 0.3s;
+}
+
+.pdf-item:hover {
+    background: #334155;
+}
+
+.active-pdf {
+    border: 2px solid #38bdf8;
+}
+
+.pdf-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    flex: 1;
+}
+
+.pdf-icon {
+    font-size: 22px;
+}
+
+.pdf-name {
+    font-size: 14px;
+    word-break: break-word;
+}
+
+.pdf-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.chat-btn {
+    background: #2563eb;
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.chat-btn:hover {
+    background: #1d4ed8;
+}
+
+.delete-btn {
+    background: #dc2626;
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.delete-btn:hover {
+    background: #b91c1c;
+}
+
+
+/* =========================
+   CHAT SECTION
+========================= */
 
 .container {
-    max-width: 600px;
-    margin: 40px auto;
-    background: #fdf8e5;
-    padding: 20px 30px;
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #0f172a;
+}
+
+
+/* =========================
+   TOP HEADER
+========================= */
+
+.top-bar {
+    padding: 22px 30px;
+    border-bottom: 1px solid #1e293b;
+
+    background: #111827;
+}
+
+.top-bar h1 {
+    font-size: 30px;
+    color: #38bdf8;
+}
+
+.top-bar p {
+    margin-top: 8px;
+    color: #94a3b8;
+}
+
+
+/* =========================
+   CHAT AREA
+========================= */
+
+.chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.bot-message,
+.user-message {
+    max-width: 75%;
+    padding: 16px;
+    border-radius: 14px;
+    line-height: 1.5;
+}
+
+.bot-message {
+    background: #1e293b;
+    align-self: flex-start;
+}
+
+.user-message {
+    background: #2563eb;
+    align-self: flex-end;
+}
+
+
+/* =========================
+   INPUT SECTION
+========================= */
+
+.input-section {
+    padding: 20px;
+    border-top: 1px solid #1e293b;
+    background: #111827;
+}
+
+#chatForm {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+#query {
+    flex: 1;
+    resize: none;
+    height: 60px;
+
+    border: none;
     border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+    background: #1e293b;
+    color: white;
+
+    padding: 16px;
+    font-size: 15px;
 }
 
-h1 {
-    text-align: center;
-    color: #2c3e50;
+#query:focus {
+    outline: none;
 }
 
-label {
-    display: block;
-    margin: 10px 0 5px;
+#pdf {
+    color: white;
+}
+
+button[type="submit"] {
+    background: #0ea5e9;
+    color: white;
+
+    border: none;
+    border-radius: 12px;
+
+    padding: 16px 24px;
+
+    cursor: pointer;
+    transition: 0.3s;
+
     font-weight: bold;
 }
 
-textarea, input[type="file"] {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    background: #223255;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-button:hover {
-    background: #08194a;
-}
-
-#responseBox {
-    margin-top: 20px;
-    padding: 15px;
-    background: #f9fafb;
-    border-left: 4px solid #7794d2;
-    border-radius: 6px;
-}
-
-#answerText {
-    font-size: 15px;
-    color: #111827;
+button[type="submit"]:hover {
+    background: #0284c7;
 }

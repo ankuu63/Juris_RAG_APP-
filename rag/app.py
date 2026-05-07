@@ -1,62 +1,173 @@
-from fastapi import FastAPI, UploadFile, Form ,File
-from fastapi.responses import FileResponse    #for rendering html page 
+
+from fastapi import FastAPI, UploadFile, Form, File
+from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles     #for adding static i.e csss files 
+from fastapi.staticfiles import StaticFiles
+
 from rag.pipeline import RAGPipeline
+
 import shutil
 import os
 import traceback
-# Initialize FastAPI application
+
+
+# =========================
+# FASTAPI APP
+# =========================
+
 app = FastAPI()
 
 
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+# =========================
+# STATIC FILES
+# =========================
+
+app.mount(
+    "/static",
+    StaticFiles(directory="frontend"),
+    name="static"
+)
 
 
-# Initialize the pipeline and igniting self
+# =========================
+# INITIALIZE PIPELINE
+# =========================
+
 pipeline = RAGPipeline()
 
-# API endpoints
+#create required folders
+os.makedirs("uploads,exist_ok=True")
+
+
+# =========================
+# HOME PAGE
+# =========================
 
 @app.get("/")
 def home():
+
     return FileResponse("frontend/index.html")
 
 
+# =========================
+# CHAT ENDPOINT
+# =========================
 
 @app.post("/chat")
-async def chat(query: str = Form(...), pdf: UploadFile = File(None)):
-   
+async def chat(
 
-    pdf_path = None  # Temporary storage path
+    query: str = Form(...),
 
-    # If a PDF is uploaded,saving pdf to tmpfile
-    if pdf:
-        pdf_path = f"temp_{pdf.filename}"
-        with open(pdf_path, "wb") as buffer:
-            shutil.copyfileobj(pdf.file, buffer)
+    pdf: UploadFile = File(None),
+
+    selected_pdf: str = Form(None)
+):
+
+    pdf_path = None
 
     try:
-        # invoking pipeline with query and pdf path
-        answer = pipeline.run(query=query, pdf_path=pdf_path)
 
-       
-        # FastAPI automatically converts Python dict -> JSON response
-      
-        return {"answer": str(answer)}
+        # =========================
+        # EXISTING PDF SELECTED
+        # =========================
+
+        if selected_pdf:
+
+            pdf_path = f"uploads/{selected_pdf}"
 
 
-    #error monitoring to debug
+        # =========================
+        # NEW PDF UPLOAD
+        # =========================
+
+        if pdf:
+
+            os.makedirs("uploads", exist_ok=True)
+
+            pdf_path = f"uploads/{pdf.filename}"
+
+            with open(pdf_path, "wb") as buffer:
+
+                shutil.copyfileobj(pdf.file, buffer)
+
+
+        # =========================
+        # RUN RAG PIPELINE
+        # =========================
+
+        answer = pipeline.run(
+
+            query=query,
+
+            pdf_path=pdf_path
+        )
+
+        return {
+            "answer": str(answer)
+        }
+
+
     except Exception as e:
-        print("Erro in /chatendpoint")
+
+        print("Error in /chat endpoint")
+
         traceback.print_exc()
 
-        return JSONResponse(content={"error": str(e)},
-                            status_code=500
-                            )
-    
+        return JSONResponse(
 
-    finally:
-        # Removing temp file
-        if pdf_path and os.path.exists(pdf_path):
-            os.remove(pdf_path)
+            content={
+                "error": str(e)
+            },
+
+            status_code=500
+        )
+
+
+# =========================
+# GET ALL PDFs
+# =========================
+
+@app.get("/pdfs")
+async def get_pdfs():
+
+    os.makedirs("uploads", exist_ok=True)
+
+    pdf_files = []
+
+    for file in os.listdir("uploads"):
+
+        if file.endswith(".pdf"):
+
+            pdf_files.append(file)
+
+    return {
+        "pdfs": pdf_files
+    }
+
+
+# =========================
+# DELETE PDF
+# =========================
+
+@app.delete("/delete-pdf/{filename}")
+async def delete_pdf(filename: str):
+
+    file_path = f"uploads/{filename}"
+
+    if not os.path.exists(file_path):
+
+        return JSONResponse(
+
+            content={
+                "error": "File not found"
+            },
+
+            status_code=404
+        )
+
+    os.remove(file_path)
+
+    return {
+        "message": "PDF deleted successfully"
+    }
+

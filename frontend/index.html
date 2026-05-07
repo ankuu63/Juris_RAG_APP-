@@ -1,142 +1,612 @@
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>JurisRAG</title>
 
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet"
+          href="/static/style.css">
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="main-layout">
 
-        <h1>📘 JurisRAG : AI powered legal assistant</h1>
+        <!-- =========================
+             SIDEBAR
+        ========================== -->
 
-        <!-- FORM -->
-        <form id="chatForm">
+        <div class="sidebar">
 
-            <!-- QUERY -->
-            <label for="query">Enter your query:</label>
+            <h2>📂 Documents</h2>
 
-            <textarea
-                id="query"
-                name="query"
-                rows="4"
-                required
-            ></textarea>
+            <div id="pdfList"
+                 class="pdf-list">
 
-            <!-- PDF -->
-            <label for="pdf">Upload PDF (optional):</label>
+                Loading PDFs...
 
-            <input
-                type="file"
-                id="pdf"
-                name="pdf"
-                accept="application/pdf"
-            >
+            </div>
 
-            <!-- BUTTON -->
-            <button type="submit">
-                Ask
-            </button>
+        </div>
 
-        </form>
 
-        <!-- RESPONSE -->
-        <div id="responseBox">
+        <!-- =========================
+             CHAT SECTION
+        ========================== -->
 
-            <h2>Answer:</h2>
+        <div class="container">
 
-            <p id="answerText">
-                Answer is cooking.....
-            </p>
+            <!-- TOP BAR -->
+
+            <div class="top-bar">
+
+                <h1>📘 JurisRAG</h1>
+
+                <p>
+                    AI powered legal assistant
+                </p>
+
+            </div>
+
+
+            <!-- CHAT AREA -->
+
+            <div class="chat-area"
+                 id="chatArea">
+
+                <div class="bot-message">
+
+                    Welcome to JurisRAG 🚀
+
+                </div>
+
+            </div>
+
+
+            <!-- INPUT SECTION -->
+
+            <div class="input-section">
+
+                <form id="chatForm">
+
+                    <textarea
+                        id="query"
+                        name="query"
+                        placeholder="Ask something about your legal documents..."
+                        required
+                    ></textarea>
+
+                    <input
+                        type="file"
+                        id="pdf"
+                        name="pdf"
+                        accept="application/pdf"
+                    >
+
+                    <button
+                        type="submit"
+                        id="askButton"
+                    >
+                        Ask
+                    </button>
+
+                </form>
+
+            </div>
 
         </div>
 
     </div>
 
-    <!-- SCRIPT -->
+
+    <!-- =========================
+         DELETE MODAL
+    ========================== -->
+
+    <div id="deleteModal"
+         class="modal">
+
+        <div class="modal-content">
+
+            <h2>
+                Delete PDF
+            </h2>
+
+            <p id="deleteMessage">
+                Are you sure?
+            </p>
+
+            <div class="modal-buttons">
+
+                <button
+                    class="cancel-btn"
+                    onclick="closeDeleteModal()"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    class="confirm-delete-btn"
+                    onclick="confirmDeletePDF()"
+                >
+                    Delete
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         SCRIPT
+    ========================== -->
+
     <script>
 
-        const form = document.getElementById("chatForm");
+        let selectedPDF = null;
 
-        form.addEventListener("submit", async function (e) {
+        let chatHistories = {};
 
-            e.preventDefault();
+        let deleteTargetPDF = null;
 
-            const responseBox =
-                document.getElementById("answerText");
 
-            responseBox.textContent =
-                "⏳ Processing... please wait";
+
+        // =========================
+        // LOAD PDFs
+        // =========================
+
+        async function loadPDFs() {
+
+            const pdfList =
+                document.getElementById("pdfList");
 
             try {
 
-                // FORM DATA
-                const formData = new FormData();
+                const response =
+                    await fetch("/pdfs");
 
-                formData.append(
-                    "query",
-                    document.getElementById("query").value
-                );
+                const data =
+                    await response.json();
 
-                // PDF FILE
-                const pdfFile =
-                    document.getElementById("pdf").files[0];
+                pdfList.innerHTML = "";
 
-                if (pdfFile) {
-                    formData.append("pdf", pdfFile);
+                if (data.pdfs.length === 0) {
+
+                    pdfList.innerHTML =
+                        "<p>No PDFs uploaded.</p>";
+
+                    return;
                 }
 
-                // FETCH REQUEST
-                const response = await fetch("/chat", {
-                    method: "POST",
-                    body: formData
-                });
+                data.pdfs.forEach(pdf => {
 
-                // GET RAW RESPONSE
-                const text = await response.text();
+                    const pdfItem =
+                        document.createElement("div");
 
-                try {
+                    pdfItem.className =
+                        "pdf-item";
 
-                    // TRY JSON PARSE
-                    const data = JSON.parse(text);
+                    if (pdf === selectedPDF) {
 
-                    if (response.ok) {
-
-                        responseBox.textContent =
-                            data.answer || "No response found.";
-
-                    } else {
-
-                        responseBox.textContent =
-                            "⚠️ Error: " +
-                            (data.error || "Unknown error");
-
+                        pdfItem.classList.add("active-pdf");
                     }
 
-                } catch (jsonError) {
+                    pdfItem.innerHTML = `
 
-                    // NON JSON RESPONSE
-                    responseBox.textContent =
-                        "❌ Backend returned non-JSON response:\n\n"
-                        + text;
+                        <div class="pdf-left">
 
+                            <div class="pdf-icon">
+                                📄
+                            </div>
+
+                            <div class="pdf-name">
+                                ${pdf}
+                            </div>
+
+                        </div>
+
+                        <div class="pdf-actions">
+
+                            <button
+                                class="chat-btn"
+                                data-pdf="${pdf}"
+                            >
+                                Chat
+                            </button>
+
+                            <button
+                                class="delete-btn"
+                                data-pdf="${pdf}"
+                            >
+                                Delete
+                            </button>
+
+                        </div>
+                    `;
+
+                    pdfList.appendChild(pdfItem);
+
+                });
+
+            } catch (error) {
+
+                console.error(error);
+
+                pdfList.innerHTML =
+                    "Failed to load PDFs";
+            }
+        }
+
+
+
+        // =========================
+        // SELECT PDF
+        // =========================
+
+        function selectPDF(pdf) {
+
+            selectedPDF = pdf;
+
+            document
+                .querySelectorAll(".pdf-item")
+                .forEach(item => {
+
+                item.classList.remove("active-pdf");
+            });
+
+            const allPDFNames =
+                document.querySelectorAll(".pdf-name");
+
+            allPDFNames.forEach(name => {
+
+                if (name.innerText === pdf) {
+
+                    name.closest(".pdf-item")
+                        .classList.add("active-pdf");
+                }
+            });
+
+            loadChatHistory(pdf);
+        }
+
+
+
+        // =========================
+        // LOAD CHAT HISTORY
+        // =========================
+
+        function loadChatHistory(pdf) {
+
+            const chatArea =
+                document.getElementById("chatArea");
+
+            chatArea.innerHTML = "";
+
+            const welcome =
+                document.createElement("div");
+
+            welcome.className =
+                "bot-message";
+
+            welcome.textContent =
+                `Chatting with ${pdf}`;
+
+            chatArea.appendChild(welcome);
+
+            if (!chatHistories[pdf]) {
+                return;
+            }
+
+            chatHistories[pdf]
+                .forEach(message => {
+
+                const msg =
+                    document.createElement("div");
+
+                msg.className =
+                    message.type;
+
+                msg.textContent =
+                    message.text;
+
+                chatArea.appendChild(msg);
+
+            });
+        }
+
+
+
+        // =========================
+        // DELETE MODAL
+        // =========================
+
+        function deletePDF(filename) {
+
+            deleteTargetPDF = filename;
+
+            document.getElementById("deleteMessage")
+                .textContent =
+                `Are you sure you want to delete "${filename}" ?`;
+
+            document.getElementById("deleteModal")
+                .style.display = "flex";
+        }
+
+
+        function closeDeleteModal() {
+
+            document.getElementById("deleteModal")
+                .style.display = "none";
+
+            deleteTargetPDF = null;
+        }
+
+
+        async function confirmDeletePDF() {
+
+            if (!deleteTargetPDF) {
+                return;
+            }
+
+            try {
+
+                const response =
+                    await fetch(`/delete-pdf/${deleteTargetPDF}`, {
+                        method: "DELETE"
+                    });
+
+                const data =
+                    await response.json();
+
+                if (response.ok) {
+
+                    if (selectedPDF === deleteTargetPDF) {
+
+                        selectedPDF = null;
+
+                        document.getElementById("chatArea")
+                            .innerHTML = `
+                                <div class="bot-message">
+                                    Workspace deleted.
+                                </div>
+                            `;
+                    }
+
+                    closeDeleteModal();
+
+                    loadPDFs();
+
+                } else {
+
+                    alert(data.error);
                 }
 
             } catch (error) {
 
-                // NETWORK ERROR
-                responseBox.textContent =
-                    "❌ Network Error:\n\n" + error;
+                console.error(error);
 
+                alert("Delete failed");
+            }
+        }
+
+
+
+        // =========================
+        // CHAT FORM
+        // =========================
+
+        const form =
+            document.getElementById("chatForm");
+
+        form.addEventListener(
+            "submit",
+            async function (e) {
+
+            e.preventDefault();
+
+            const askButton =
+                document.getElementById("askButton");
+
+            askButton.disabled = true;
+
+            askButton.innerText = "Processing...";
+
+            const chatArea =
+                document.getElementById("chatArea");
+
+            const query =
+                document.getElementById("query").value;
+
+            const formData =
+                new FormData();
+
+            formData.append("query", query);
+
+
+            // EXISTING PDF
+
+            if (selectedPDF) {
+
+                formData.append(
+                    "selected_pdf",
+                    selectedPDF
+                );
+            }
+
+
+            // NEW PDF WORKSPACE
+
+            const pdfFile =
+                document.getElementById("pdf").files[0];
+
+            if (pdfFile) {
+
+                formData.append("pdf", pdfFile);
+
+                selectedPDF = pdfFile.name;
+
+                if (!chatHistories[selectedPDF]) {
+
+                    chatHistories[selectedPDF] = [];
+                }
+
+                // CLEAR OLD CHAT
+
+                chatArea.innerHTML = "";
+
+                // SHOW HEADER
+
+                const welcome =
+                    document.createElement("div");
+
+                welcome.className =
+                    "bot-message";
+
+                welcome.textContent =
+                    `Chatting with ${selectedPDF}`;
+
+                chatArea.appendChild(welcome);
+
+                // REFRESH SIDEBAR FIRST
+
+                await loadPDFs();
+            }
+
+
+            // USER MESSAGE
+
+            const userMessage =
+                document.createElement("div");
+
+            userMessage.className =
+                "user-message";
+
+            userMessage.textContent =
+                query;
+
+            chatArea.appendChild(userMessage);
+
+
+            // STORE USER CHAT
+
+            if (selectedPDF) {
+
+                if (!chatHistories[selectedPDF]) {
+
+                    chatHistories[selectedPDF] = [];
+                }
+
+                chatHistories[selectedPDF].push({
+
+                    type: "user-message",
+                    text: query
+                });
+            }
+
+
+            try {
+
+                const response =
+                    await fetch("/chat", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                const data =
+                    await response.json();
+
+                const botMessage =
+                    document.createElement("div");
+
+                botMessage.className =
+                    "bot-message";
+
+                botMessage.textContent =
+                    data.answer || data.error;
+
+                chatArea.appendChild(botMessage);
+
+
+                // STORE BOT CHAT
+
+                if (selectedPDF) {
+
+                    chatHistories[selectedPDF].push({
+
+                        type: "bot-message",
+                        text: data.answer || data.error
+                    });
+                }
+
+
+                chatArea.scrollTop =
+                    chatArea.scrollHeight;
+
+                document.getElementById("query").value = "";
+
+                document.getElementById("pdf").value = "";
+
+            } catch (error) {
+
+                alert("Network Error");
+            }
+
+            finally {
+
+                askButton.disabled = false;
+
+                askButton.innerText = "Ask";
             }
 
         });
 
+
+
+        // =========================
+        // GLOBAL BUTTON EVENTS
+        // =========================
+
+        document.addEventListener("click", function (e) {
+
+            // CHAT BUTTON
+
+            if (e.target.classList.contains("chat-btn")) {
+
+                const pdf =
+                    e.target.dataset.pdf;
+
+                selectPDF(pdf);
+            }
+
+
+            // DELETE BUTTON
+
+            if (e.target.classList.contains("delete-btn")) {
+
+                const pdf =
+                    e.target.dataset.pdf;
+
+                deletePDF(pdf);
+            }
+
+        });
+
+
+
+        // INITIAL LOAD
+
+        loadPDFs();
+
     </script>
 
 </body>
+
 </html>
