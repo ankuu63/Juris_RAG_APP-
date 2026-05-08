@@ -1,4 +1,5 @@
 let selectedPDF = null;
+
 let deleteTargetPDF = null;
 
 
@@ -58,11 +59,33 @@ async function loadPDFs() {
 
         `;
 
-
         pdfList.appendChild(card);
-
     });
 }
+
+
+// =========================
+// FILE PICKER
+// =========================
+
+const pdfInput = document.getElementById('pdf');
+
+pdfInput.addEventListener('change', () => {
+
+    const fileNameText =
+        document.getElementById('selectedFileName');
+
+
+    if (pdfInput.files.length > 0) {
+
+        fileNameText.innerText =
+            pdfInput.files[0].name;
+
+    } else {
+
+        fileNameText.innerText = '';
+    }
+});
 
 
 // =========================
@@ -76,11 +99,14 @@ chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
 
-    const queryInput = document.getElementById('query');
+    const queryInput =
+        document.getElementById('query');
 
-    const pdfInput = document.getElementById('pdf');
+    const askButton =
+        document.getElementById('askButton');
 
-    const chatArea = document.getElementById('chatArea');
+    const chatArea =
+        document.getElementById('chatArea');
 
 
     const query = queryInput.value.trim();
@@ -89,17 +115,26 @@ chatForm.addEventListener('submit', async (e) => {
 
 
     // =========================
+    // FREEZE BUTTON
+    // =========================
+
+    askButton.disabled = true;
+
+    askButton.innerText = 'Thinking...';
+
+
+    // =========================
     // USER MESSAGE
     // =========================
 
-    const userMessage = document.createElement('div');
+    const userMessage =
+        document.createElement('div');
 
     userMessage.className = 'user-message';
 
     userMessage.innerText = query;
 
     chatArea.appendChild(userMessage);
-
 
     chatArea.scrollTop = chatArea.scrollHeight;
 
@@ -115,15 +150,22 @@ chatForm.addEventListener('submit', async (e) => {
 
     if (pdfInput.files.length > 0) {
 
-        formData.append('pdf', pdfInput.files[0]);
+        formData.append(
+            'pdf',
+            pdfInput.files[0]
+        );
 
-        selectedPDF = pdfInput.files[0].name;
+        selectedPDF =
+            pdfInput.files[0].name;
     }
 
 
     if (selectedPDF) {
 
-        formData.append('selected_pdf', selectedPDF);
+        formData.append(
+            'selected_pdf',
+            selectedPDF
+        );
     }
 
 
@@ -131,53 +173,156 @@ chatForm.addEventListener('submit', async (e) => {
 
 
     // =========================
-    // FETCH CHAT RESPONSE
+    // UPDATE HEADER
     // =========================
 
-    const response = await fetch('/chat', {
-
-        method: 'POST',
-
-        body: formData
-    });
+    const currentPDFText =
+        document.getElementById(
+            'currentPDFText'
+        );
 
 
-    const data = await response.json();
+    if (selectedPDF) {
 
-
-    // =========================
-    // BOT MESSAGE
-    // =========================
-
-    const botMessage = document.createElement('div');
-
-    botMessage.className = 'bot-message';
-
-
-    if (data.error) {
-
-        botMessage.innerText = data.error;
-
-    } else {
-
-        botMessage.innerText = data.answer;
+        currentPDFText.innerText =
+            `Chatting with ${selectedPDF}`;
     }
 
 
-    chatArea.appendChild(botMessage);
+    try {
+
+        // =========================
+        // FETCH RESPONSE
+        // =========================
+
+        const response = await fetch('/chat', {
+
+            method: 'POST',
+
+            body: formData
+        });
+
+        const data = await response.json();
 
 
-    chatArea.scrollTop = chatArea.scrollHeight;
+        // =========================
+        // BOT MESSAGE
+        // =========================
+
+        const botMessage =
+            document.createElement('div');
+
+        botMessage.className =
+            'bot-message';
+
+
+        if (data.error) {
+
+            botMessage.innerText =
+                data.error;
+
+        } else {
+
+            let finalText =
+                data.answer;
+
+
+            // =========================
+            // CITATIONS
+            // =========================
+
+            if (data.sources) {
+
+                finalText +=
+                    "\n\nSources:\n";
+
+
+                if (
+                    Array.isArray(data.sources)
+                ) {
+
+                    data.sources.forEach(
+                        source => {
+
+                        if (
+                            typeof source ===
+                            "object"
+                        ) {
+
+                            const page =
+                                source.page ||
+                                "Unknown";
+
+                            const content =
+                                source.content ||
+                                source.text ||
+                                source.source ||
+                                "Citation";
+
+                            finalText +=
+                                `• Page ${page}: ${content}\n`;
+
+                        } else {
+
+                            finalText +=
+                                `• ${source}\n`;
+                        }
+                    });
+
+                } else {
+
+                    finalText +=
+                        `• ${data.sources}`;
+                }
+            }
+
+
+            botMessage.innerText =
+                finalText;
+        }
+
+
+        chatArea.appendChild(
+            botMessage
+        );
+
+        chatArea.scrollTop =
+            chatArea.scrollHeight;
+
+
+        loadPDFs();
+
+    } catch (error) {
+
+        const errorMessage =
+            document.createElement('div');
+
+        errorMessage.className =
+            'bot-message';
+
+        errorMessage.innerText =
+            'Something went wrong.';
+
+        chatArea.appendChild(
+            errorMessage
+        );
+    }
 
 
     // =========================
-    // RELOAD PDF LIST
+    // UNFREEZE BUTTON
     // =========================
 
-    loadPDFs();
+    askButton.disabled = false;
+
+    askButton.innerText = 'Ask';
 
 
     pdfInput.value = '';
+
+    document.getElementById(
+        'selectedFileName'
+    ).innerText = '';
 });
 
 
@@ -190,47 +335,60 @@ async function loadChatHistory(pdfName) {
     selectedPDF = pdfName;
 
 
-    const response = await fetch(`/chat-history/${pdfName}`);
+    const response = await fetch(
+        `/chat-history/${pdfName}`
+    );
 
     const data = await response.json();
 
 
-    const chatArea = document.getElementById('chatArea');
+    const chatArea =
+        document.getElementById(
+            'chatArea'
+        );
 
     chatArea.innerHTML = '';
 
 
-    const welcome = document.createElement('div');
+    // =========================
+    // UPDATE HEADER
+    // =========================
 
-    welcome.className = 'bot-message';
-
-    welcome.innerText = `Chatting with ${pdfName}`;
-
-    chatArea.appendChild(welcome);
+    document.getElementById(
+        'currentPDFText'
+    ).innerText =
+        `Chatting with ${pdfName}`;
 
 
     data.messages.forEach(msg => {
 
-        const messageDiv = document.createElement('div');
+        const messageDiv =
+            document.createElement('div');
 
 
         if (msg.sender === 'user') {
 
-            messageDiv.className = 'user-message';
+            messageDiv.className =
+                'user-message';
 
         } else {
 
-            messageDiv.className = 'bot-message';
+            messageDiv.className =
+                'bot-message';
         }
 
 
-        messageDiv.innerText = msg.message;
+        messageDiv.innerText =
+            msg.message;
 
-        chatArea.appendChild(messageDiv);
+        chatArea.appendChild(
+            messageDiv
+        );
     });
 
 
-    chatArea.scrollTop = chatArea.scrollHeight;
+    chatArea.scrollTop =
+        chatArea.scrollHeight;
 }
 
 
@@ -242,16 +400,23 @@ function openDeleteModal(pdfName) {
 
     deleteTargetPDF = pdfName;
 
-    document.getElementById('deleteModal').style.display = 'flex';
+    document.getElementById(
+        'deleteModal'
+    ).style.display = 'flex';
 
-    document.getElementById('deleteMessage').innerText =
+
+    document.getElementById(
+        'deleteMessage'
+    ).innerText =
         `Delete ${pdfName}?`;
 }
 
 
 function closeDeleteModal() {
 
-    document.getElementById('deleteModal').style.display = 'none';
+    document.getElementById(
+        'deleteModal'
+    ).style.display = 'none';
 }
 
 
@@ -264,10 +429,12 @@ async function confirmDeletePDF() {
     if (!deleteTargetPDF) return;
 
 
-    await fetch(`/delete-pdf/${deleteTargetPDF}`, {
-
-        method: 'DELETE'
-    });
+    await fetch(
+        `/delete-pdf/${deleteTargetPDF}`,
+        {
+            method: 'DELETE'
+        }
+    );
 
 
     closeDeleteModal();
@@ -277,10 +444,21 @@ async function confirmDeletePDF() {
 
         selectedPDF = null;
 
-        document.getElementById('chatArea').innerHTML = `
+
+        document.getElementById(
+            'currentPDFText'
+        ).innerText =
+            'AI powered legal assistant';
+
+
+        document.getElementById(
+            'chatArea'
+        ).innerHTML = `
+
             <div class="bot-message">
                 Welcome to JurisRAG 🚀
             </div>
+
         `;
     }
 

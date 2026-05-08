@@ -517,3 +517,28 @@ body{
     background:#2b2b2b;
     border-radius:20px;
 }
+
+.selected-file-name {
+
+    color: #9ca3af;
+
+    font-size: 13px;
+
+    min-width: 180px;
+
+    max-width: 220px;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+
+#askButton:disabled {
+
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}

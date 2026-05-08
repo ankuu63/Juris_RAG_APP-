@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,26 +18,59 @@
 
 <body>
 
-    <div class="main-layout">
+    <!-- TOP NAVBAR -->
 
-        <!-- =========================
-             SIDEBAR
-        ========================== -->
+    <div class="top-navbar">
 
-        <div class="sidebar">
+        <div class="brand-section">
 
-            <div class="logo-section">
+            <img
+                src="/static/workspace/assets/logo.jpg"
+                class="brand-logo"
+            >
 
-                <img src="/static/workspace/assets/logo.jpg">
+            <h1>
+                Legistral
+            </h1>
 
-                <h1>Legistral</h1>
+        </div>
+
+        <div class="top-right">
+
+            <button class="upgrade-btn">
+                👑 Upgrade
+            </button>
+
+            <div class="user-profile">
+
+                <div class="avatar">
+                    A
+                </div>
+
+                <span>
+                    Aman
+                </span>
 
             </div>
 
+        </div>
 
-            <div class="sidebar-top">
+    </div>
 
-                <h2>Documents</h2>
+
+    <!-- MAIN LAYOUT -->
+
+    <div class="main-layout">
+
+        <!-- SIDEBAR -->
+
+        <div class="sidebar">
+
+            <div class="sidebar-header">
+
+                <h2>
+                    Documents
+                </h2>
 
                 <button class="add-btn">
                     +
@@ -48,61 +82,33 @@
             <div id="pdfList"
                  class="pdf-list">
 
-                Loading PDFs...
-
             </div>
 
         </div>
 
 
-        <!-- =========================
-             MAIN CONTAINER
-        ========================== -->
+        <!-- CHAT CONTAINER -->
 
         <div class="container">
 
-
-            <!-- =========================
-                 TOP NAVBAR
-            ========================== -->
-
-            <div class="top-nav">
-
-                <button class="upgrade-btn">
-                    👑 Upgrade
-                </button>
-
-
-                <div class="profile-section">
-
-                    <div class="profile-circle">
-                        A
-                    </div>
-
-                    <div class="profile-name">
-                        Aman
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =========================
-                 TOP BAR
-            ========================== -->
+            <!-- TOP BAR -->
 
             <div class="top-bar">
 
-                <div class="brand-left">
+                <div class="top-left">
 
-                    <img src="/static/workspace/assets/icon.jpg">
+                    <img
+                        src="/static/workspace/assets/icon.jpg"
+                        class="workspace-icon"
+                    >
 
                     <div>
 
-                        <h1>JurisRAG</h1>
+                        <h1>
+                            JurisRAG
+                        </h1>
 
-                        <p>
+                        <p id="currentPDFText">
                             AI powered legal assistant
                         </p>
 
@@ -113,16 +119,21 @@
 
                 <div class="top-actions">
 
-                    <button class="top-action-btn">
+                    <button class="icon-btn">
 
-                        <img src="/static/workspace/assets/share-icon.jpg">
+                        <img
+                            src="/static/workspace/assets/share-icon.jpg"
+                            class="top-icon"
+                        >
 
                     </button>
 
+                    <button class="icon-btn">
 
-                    <button class="top-action-btn">
-
-                        <img src="/static/workspace/assets/copy-icon.jpg">
+                        <img
+                            src="/static/workspace/assets/copy-icon.jpg"
+                            class="top-icon"
+                        >
 
                     </button>
 
@@ -131,9 +142,7 @@
             </div>
 
 
-            <!-- =========================
-                 CHAT AREA
-            ========================== -->
+            <!-- CHAT AREA -->
 
             <div class="chat-area"
                  id="chatArea">
@@ -147,18 +156,21 @@
             </div>
 
 
-            <!-- =========================
-                 INPUT SECTION
-            ========================== -->
+            <!-- INPUT SECTION -->
 
             <div class="input-section">
 
                 <form id="chatForm">
 
-                    <label for="pdf"
-                           class="upload-btn">
+                    <!-- FILE PIN -->
 
-                        <img src="/static/workspace/assets/pin-icon.jpg">
+                    <label for="pdf"
+                           class="pin-label">
+
+                        <img
+                            src="/static/workspace/assets/pin-icon.jpg"
+                            class="pin-icon"
+                        >
 
                     </label>
 
@@ -171,6 +183,13 @@
                     >
 
 
+                    <div id="selectedFileName"
+                         class="selected-file-name">
+                    </div>
+
+
+                    <!-- QUERY -->
+
                     <textarea
                         id="query"
                         name="query"
@@ -178,6 +197,8 @@
                         required
                     ></textarea>
 
+
+                    <!-- ASK BUTTON -->
 
                     <button
                         type="submit"
@@ -195,9 +216,7 @@
     </div>
 
 
-    <!-- =========================
-         DELETE MODAL
-    ========================== -->
+    <!-- DELETE MODAL -->
 
     <div id="deleteModal"
          class="modal">
