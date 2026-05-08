@@ -49,13 +49,15 @@ os.makedirs("uploads", exist_ok=True)
 
 
 # =========================
-# HOME PAGE
+# WORKSPACE PAGE
 # =========================
 
 @app.get("/")
-def home():
+def workspace():
 
-    return FileResponse("frontend/index.html")
+    return FileResponse(
+        "frontend/workspace/index.html"
+    )
 
 
 # =========================

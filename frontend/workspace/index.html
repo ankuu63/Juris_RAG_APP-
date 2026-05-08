@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>JurisRAG</title>
+
+    <link rel="stylesheet"
+          href="/static/workspace/style.css">
+
+</head>
+
+<body>
+
+    <div class="main-layout">
+
+        <!-- =========================
+             SIDEBAR
+        ========================== -->
+
+        <div class="sidebar">
+
+            <div class="logo-section">
+
+                <img src="/static/workspace/assets/logo.jpg">
+
+                <h1>Legistral</h1>
+
+            </div>
+
+
+            <div class="sidebar-top">
+
+                <h2>Documents</h2>
+
+                <button class="add-btn">
+                    +
+                </button>
+
+            </div>
+
+
+            <div id="pdfList"
+                 class="pdf-list">
+
+                Loading PDFs...
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             MAIN CONTAINER
+        ========================== -->
+
+        <div class="container">
+
+
+            <!-- =========================
+                 TOP NAVBAR
+            ========================== -->
+
+            <div class="top-nav">
+
+                <button class="upgrade-btn">
+                    👑 Upgrade
+                </button>
+
+
+                <div class="profile-section">
+
+                    <div class="profile-circle">
+                        A
+                    </div>
+
+                    <div class="profile-name">
+                        Aman
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 TOP BAR
+            ========================== -->
+
+            <div class="top-bar">
+
+                <div class="brand-left">
+
+                    <img src="/static/workspace/assets/icon.jpg">
+
+                    <div>
+
+                        <h1>JurisRAG</h1>
+
+                        <p>
+                            AI powered legal assistant
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="top-actions">
+
+                    <button class="top-action-btn">
+
+                        <img src="/static/workspace/assets/share-icon.jpg">
+
+                    </button>
+
+
+                    <button class="top-action-btn">
+
+                        <img src="/static/workspace/assets/copy-icon.jpg">
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 CHAT AREA
+            ========================== -->
+
+            <div class="chat-area"
+                 id="chatArea">
+
+                <div class="bot-message">
+
+                    Welcome to JurisRAG 🚀
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 INPUT SECTION
+            ========================== -->
+
+            <div class="input-section">
+
+                <form id="chatForm">
+
+                    <label for="pdf"
+                           class="upload-btn">
+
+                        <img src="/static/workspace/assets/pin-icon.jpg">
+
+                    </label>
+
+
+                    <input
+                        type="file"
+                        id="pdf"
+                        name="pdf"
+                        accept="application/pdf"
+                    >
+
+
+                    <textarea
+                        id="query"
+                        name="query"
+                        placeholder="Ask something about your legal documents..."
+                        required
+                    ></textarea>
+
+
+                    <button
+                        type="submit"
+                        id="askButton"
+                    >
+                        Ask
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         DELETE MODAL
+    ========================== -->
+
+    <div id="deleteModal"
+         class="modal">
+
+        <div class="modal-content">
+
+            <h2>
+                Delete PDF
+            </h2>
+
+            <p id="deleteMessage">
+                Are you sure?
+            </p>
+
+            <div class="modal-buttons">
+
+                <button
+                    class="cancel-btn"
+                    onclick="closeDeleteModal()"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    class="confirm-delete-btn"
+                    onclick="confirmDeletePDF()"
+                >
+                    Delete
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script src="/static/workspace/script.js"></script>
+
+</body>
+
+</html>
