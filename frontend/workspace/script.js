@@ -29,7 +29,7 @@ async function loadPDFs() {
 
             <div class="pdf-left">
 
-                <img src="/static/workspace/assets/pdf-icon.png">
+                <img src="/static/workspace/assets/pdf-icon.jpg">
 
                 <div class="pdf-name">
                     ${pdf}
@@ -43,7 +43,7 @@ async function loadPDFs() {
                 <button class="icon-btn"
                         onclick="loadChatHistory('${pdf}')">
 
-                    <img src="/static/workspace/assets/chat-icon.png">
+                    <img src="/static/workspace/assets/chat-icon.jpg">
 
                 </button>
 
@@ -51,7 +51,7 @@ async function loadPDFs() {
                 <button class="icon-btn"
                         onclick="openDeleteModal('${pdf}')">
 
-                    <img src="/static/workspace/assets/delete-icon.png">
+                    <img src="/static/workspace/assets/delete-icon.jpg">
 
                 </button>
 
@@ -114,18 +114,10 @@ chatForm.addEventListener('submit', async (e) => {
     if (!query) return;
 
 
-    // =========================
-    // FREEZE BUTTON
-    // =========================
-
     askButton.disabled = true;
 
     askButton.innerText = 'Thinking...';
 
-
-    // =========================
-    // USER MESSAGE
-    // =========================
 
     const userMessage =
         document.createElement('div');
@@ -138,10 +130,6 @@ chatForm.addEventListener('submit', async (e) => {
 
     chatArea.scrollTop = chatArea.scrollHeight;
 
-
-    // =========================
-    // FORM DATA
-    // =========================
 
     const formData = new FormData();
 
@@ -172,10 +160,6 @@ chatForm.addEventListener('submit', async (e) => {
     queryInput.value = '';
 
 
-    // =========================
-    // UPDATE HEADER
-    // =========================
-
     const currentPDFText =
         document.getElementById(
             'currentPDFText'
@@ -191,10 +175,6 @@ chatForm.addEventListener('submit', async (e) => {
 
     try {
 
-        // =========================
-        // FETCH RESPONSE
-        // =========================
-
         const response = await fetch('/chat', {
 
             method: 'POST',
@@ -204,10 +184,6 @@ chatForm.addEventListener('submit', async (e) => {
 
         const data = await response.json();
 
-
-        // =========================
-        // BOT MESSAGE
-        // =========================
 
         const botMessage =
             document.createElement('div');
@@ -226,10 +202,6 @@ chatForm.addEventListener('submit', async (e) => {
             let finalText =
                 data.answer;
 
-
-            // =========================
-            // CITATIONS
-            // =========================
 
             if (data.sources) {
 
@@ -309,10 +281,6 @@ chatForm.addEventListener('submit', async (e) => {
     }
 
 
-    // =========================
-    // UNFREEZE BUTTON
-    // =========================
-
     askButton.disabled = false;
 
     askButton.innerText = 'Ask';
@@ -336,7 +304,7 @@ async function loadChatHistory(pdfName) {
 
 
     const response = await fetch(
-        `/chat-history/${pdfName}`
+        `/chat-history/${encodeURIComponent(pdfName)}`
     );
 
     const data = await response.json();
@@ -349,10 +317,6 @@ async function loadChatHistory(pdfName) {
 
     chatArea.innerHTML = '';
 
-
-    // =========================
-    // UPDATE HEADER
-    // =========================
 
     document.getElementById(
         'currentPDFText'
@@ -430,7 +394,7 @@ async function confirmDeletePDF() {
 
 
     await fetch(
-        `/delete-pdf/${deleteTargetPDF}`,
+        `/delete-pdf/${encodeURIComponent(deleteTargetPDF)}`,
         {
             method: 'DELETE'
         }
