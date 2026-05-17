@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
 
-from langchain_openai import ChatOpenAI
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_openai import ChatOpenAI , OpenAIEmbeddings
+
 
 from langchain_core.prompts import PromptTemplate
 
@@ -47,8 +47,8 @@ class Embedder:
 
     def __init__(self):
 
-        self.Emodel = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        self.Emodel = OpenAIEmbeddings(
+            model_name="text-embedding-3-small"
         )
 
 
