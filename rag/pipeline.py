@@ -48,7 +48,7 @@ class Embedder:
     def __init__(self):
 
         self.Emodel = OpenAIEmbeddings(
-            model_name="text-embedding-3-small"
+            model="text-embedding-3-small"
         )
 
 
